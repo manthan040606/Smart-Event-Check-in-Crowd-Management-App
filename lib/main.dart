@@ -76,8 +76,6 @@ class MainNavigation extends ConsumerStatefulWidget {
 }
 
 class _MainNavigationState extends ConsumerState<MainNavigation> {
-  int _currentIndex = 0;
-
   final List<Widget> _screens = [
     const DashboardScreen(),
     const CheckInScreen(),
@@ -96,7 +94,7 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
         duration: const Duration(milliseconds: 300),
         child: isHost ? _screens[currentIndex] : (currentIndex == 0 ? const DashboardScreen() : const MoreScreen()),
       ),
-      bottomNavigationBar: isHost ? Container(
+      bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
@@ -173,7 +171,6 @@ class MoreScreen extends ConsumerWidget {
             title: const Text("Reset Active Event"),
             onTap: () async {
               await ref.read(eventProvider.notifier).clearEvent();
-              // Navigation will reset automatically via MyApp logic
             },
           ),
         ],

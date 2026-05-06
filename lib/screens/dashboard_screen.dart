@@ -12,6 +12,7 @@ import '../providers/user_role_provider.dart';
 import '../theme.dart';
 import '../models/event.dart';
 import 'event_setup_screen.dart';
+import 'check_in_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -78,6 +79,17 @@ class DashboardScreen extends ConsumerWidget {
   Widget _buildAttendeeDashboard(BuildContext context, WidgetRef ref, Event? event) {
     return Scaffold(
       backgroundColor: Colors.white,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // Navigate to scanner
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const CheckInScreen())
+          );
+        },
+        backgroundColor: AppTheme.primaryPurple,
+        icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white),
+        label: const Text("Scan QR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
       body: CustomScrollView(
         slivers: [
           _buildSliverAppBar(ref, event, false),

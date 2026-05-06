@@ -19,22 +19,24 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   bool _isScanning = true;
 
   void _handleCheckIn(String id, String name, {String? email}) async {
+    // Show loading or immediate haptic to indicate scan start
+    HapticFeedback.lightImpact();
+    
     final error = await ref.read(attendanceProvider.notifier).checkIn(id, name, email: email);
     if (!mounted) return;
 
     if (error == null) {
-      HapticFeedback.heavyImpact();
+      HapticFeedback.mediumImpact();
       _showSuccessDialog(name);
       _manualIdController.clear();
-      _manualNameController.clear();
-      _manualEmailController.clear();
     } else {
       HapticFeedback.vibrate();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error),
+          content: Text("Error: $error"),
           backgroundColor: AppTheme.errorRed,
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
         ),
       );
     }

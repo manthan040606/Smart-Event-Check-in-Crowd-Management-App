@@ -14,7 +14,8 @@ import 'providers/event_provider.dart';
 import 'providers/user_role_provider.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/auth_screen.dart';
-import 'providers/navigation_provider.dart';
+import 'screens/settings_screen.dart';
+import 'screens/attendee_pass_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,6 +69,8 @@ class MyApp extends ConsumerWidget {
   }
 }
 
+
+
 class MainNavigation extends ConsumerStatefulWidget {
   const MainNavigation({super.key});
 
@@ -80,7 +83,7 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
     const DashboardScreen(),
     const CheckInScreen(),
     const LogsScreen(),
-    const MoreScreen(),
+    const SettingsScreen(),
   ];
 
   @override
@@ -92,7 +95,7 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
     return Scaffold(
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
-        child: isHost ? _screens[currentIndex] : (currentIndex == 0 ? const DashboardScreen() : const MoreScreen()),
+        child: isHost ? _screens[currentIndex] : (currentIndex == 0 ? const AttendeePassScreen() : const SettingsScreen()),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -128,9 +131,9 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
                   label: 'Logs',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.more_horiz_rounded),
-                  selectedIcon: Icon(Icons.more_horiz_rounded, color: AppTheme.primaryPurple),
-                  label: 'More',
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings_rounded, color: AppTheme.primaryPurple),
+                  label: 'Settings',
                 ),
               ]
             : const [
@@ -140,40 +143,12 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
                   label: 'My Pass',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.more_horiz_rounded),
-                  selectedIcon: Icon(Icons.more_horiz_rounded, color: AppTheme.primaryPurple),
-                  label: 'More',
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings_rounded, color: AppTheme.primaryPurple),
+                  label: 'Settings',
                 ),
               ],
         ),
-      ),
-    );
-  }
-}
-
-class MoreScreen extends ConsumerWidget {
-  const MoreScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("More")),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          ListTile(
-            leading: const Icon(Icons.logout_rounded, color: AppTheme.errorRed),
-            title: const Text("Logout"),
-            onTap: () => ref.read(userRoleProvider.notifier).logout(),
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete_sweep_rounded, color: AppTheme.warningOrange),
-            title: const Text("Reset Active Event"),
-            onTap: () async {
-              await ref.read(eventProvider.notifier).clearEvent();
-            },
-          ),
-        ],
       ),
     );
   }

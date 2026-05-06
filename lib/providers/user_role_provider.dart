@@ -4,7 +4,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 enum UserRole { host, attendee, none }
 
 class UserRoleNotifier extends StateNotifier<UserRole> {
-  UserRoleNotifier() : super(UserRole.none) {
+  final Ref ref;
+  UserRoleNotifier(this.ref) : super(UserRole.none) {
     _loadRole();
   }
 
@@ -17,16 +18,23 @@ class UserRoleNotifier extends StateNotifier<UserRole> {
   Future<void> setRole(UserRole role) async {
     final box = await Hive.openBox('settings');
     await box.put('user_role', role.name);
+    // Reset navigation to first tab when switching roles
+    ref.read(navigationProvider.notifier).state = 0;
     state = role;
   }
 
   Future<void> logout() async {
     final box = await Hive.openBox('settings');
     await box.delete('user_role');
+    await box.delete('current_user_id');
+    // Reset navigation
+    ref.read(navigationProvider.notifier).state = 0;
     state = UserRole.none;
   }
 }
 
 final userRoleProvider = StateNotifierProvider<UserRoleNotifier, UserRole>((ref) {
-  return UserRoleNotifier();
+  return UserRoleNotifier(ref);
 });
+
+final navigationProvider = StateProvider<int>((ref) => 0);

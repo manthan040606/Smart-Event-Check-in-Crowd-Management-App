@@ -208,7 +208,10 @@ class QrScannerOverlayShape extends ShapeBorder {
       Path()
         ..moveTo(left, top + borderLength)
         ..lineTo(left, top + borderRadius)
-        ..arcToPoint(Radius.circular(borderRadius))
+        ..arcToPoint(
+          Offset(left + borderRadius, top),
+          radius: Radius.circular(borderRadius),
+        )
         ..lineTo(left + borderLength, top),
       borderPaint,
     );
@@ -217,7 +220,11 @@ class QrScannerOverlayShape extends ShapeBorder {
       Path()
         ..moveTo(left + boxWidth - borderLength, top)
         ..lineTo(left + boxWidth - borderRadius, top)
-        ..arcToPoint(Radius.circular(borderRadius))
+        ..arcToPoint(
+          Offset(left + boxWidth, top + borderRadius),
+          radius: Radius.circular(borderRadius),
+          clockwise: true,
+        )
         ..lineTo(left + boxWidth, top + borderLength),
       borderPaint,
     );
@@ -226,7 +233,11 @@ class QrScannerOverlayShape extends ShapeBorder {
       Path()
         ..moveTo(left, top + boxHeight - borderLength)
         ..lineTo(left, top + boxHeight - borderRadius)
-        ..arcToPoint(Radius.circular(borderRadius))
+        ..arcToPoint(
+          Offset(left + borderRadius, top + boxHeight),
+          radius: Radius.circular(borderRadius),
+          clockwise: false,
+        )
         ..lineTo(left + borderLength, top + boxHeight),
       borderPaint,
     );
@@ -235,7 +246,11 @@ class QrScannerOverlayShape extends ShapeBorder {
       Path()
         ..moveTo(left + boxWidth - borderLength, top + boxHeight)
         ..lineTo(left + boxWidth - borderRadius, top + boxHeight)
-        ..arcToPoint(Radius.circular(borderRadius))
+        ..arcToPoint(
+          Offset(left + boxWidth, top + boxHeight - borderRadius),
+          radius: Radius.circular(borderRadius),
+          clockwise: false,
+        )
         ..lineTo(left + boxWidth, top + boxHeight - borderLength),
       borderPaint,
     );

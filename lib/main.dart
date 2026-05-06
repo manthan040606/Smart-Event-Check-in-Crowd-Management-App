@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart';
+import 'package:device_preview/device_preview.dart';
 import 'models/participant.dart';
 import 'models/event.dart';
 import 'theme.dart';
@@ -20,8 +22,11 @@ void main() async {
   Hive.registerAdapter(EventAdapter());
   
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    ProviderScope(
+      child: DevicePreview(
+        enabled: !kReleaseMode,
+        builder: (context) => const MyApp(),
+      ),
     ),
   );
 }
@@ -34,6 +39,9 @@ class MyApp extends ConsumerWidget {
     final event = ref.watch(eventProvider);
 
     return MaterialApp(
+      useInheritedMediaQuery: true,
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
       title: 'Smart Event Check-in',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,

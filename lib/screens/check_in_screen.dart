@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../providers/attendance_provider.dart';
+import '../theme.dart';
 
 class CheckInScreen extends ConsumerStatefulWidget {
   const CheckInScreen({super.key});
@@ -13,44 +15,131 @@ class CheckInScreen extends ConsumerStatefulWidget {
 class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   final _manualIdController = TextEditingController();
   final _manualNameController = TextEditingController();
+  final _manualEmailController = TextEditingController();
   bool _isScanning = true;
 
-  void _handleCheckIn(String id, String name) async {
-    final error = await ref.read(attendanceProvider.notifier).checkIn(id, name);
+  void _handleCheckIn(String id, String name, {String? email}) async {
+    final error = await ref.read(attendanceProvider.notifier).checkIn(id, name, email: email);
     if (!mounted) return;
 
     if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Successfully checked in: $name"),
-          backgroundColor: Colors.green,
-        ),
-      );
+      HapticFeedback.heavyImpact();
+      _showSuccessDialog(name);
       _manualIdController.clear();
       _manualNameController.clear();
+      _manualEmailController.clear();
     } else {
+      HapticFeedback.vibrate();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.errorRed,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
   }
 
+  void _showSuccessDialog(String name) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle_rounded, color: AppTheme.successGreen, size: 60),
+            const SizedBox(height: 16),
+            const Text("Check-in Success", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+            const SizedBox(height: 8),
+            Text("$name is now registered.", textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Done"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Check-in", style: TextStyle(fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: Icon(_isScanning ? Icons.keyboard : Icons.qr_code_scanner),
-            onPressed: () => setState(() => _isScanning = !_isScanning),
-          )
-        ],
+        title: const Text("Check-in", style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF00A389), // Teal from reference
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: _isScanning ? _buildScanner() : _buildManualEntry(),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              height: 350,
+              margin: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Colors.grey.shade100, width: 2),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: _buildScanner(),
+              ),
+            ),
+            const Text(
+              "Align QR code within the frame\nto scan",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            const Row(
+              children: [
+                Expanded(child: Divider(indent: 40, endIndent: 20)),
+                Text("OR", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                Expanded(child: Divider(indent: 20, endIndent: 40)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text("Enter Participant ID", style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _manualIdController,
+                    decoration: InputDecoration(
+                      hintText: "Enter Participant ID",
+                      prefixIcon: const Icon(Icons.person_outline),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_manualIdController.text.isNotEmpty) {
+                        _handleCheckIn(_manualIdController.text, "Manual User");
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00A389),
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text("Check-in", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -62,13 +151,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
             final List<Barcode> barcodes = capture.barcodes;
             for (final barcode in barcodes) {
               if (barcode.rawValue != null) {
-                // For simulation/demo purposes, we'll use the QR code raw value as ID and "Guest" as name
-                _handleCheckIn(barcode.rawValue!, "QR User");
-                // Stop scanning briefly to prevent multiple scans
-                setState(() => _isScanning = false);
-                Future.delayed(const Duration(seconds: 2), () {
-                  if (mounted) setState(() => _isScanning = true);
-                });
+                _handleCheckIn(barcode.rawValue!, "Scan User");
                 break;
               }
             }
@@ -81,72 +164,19 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
 
   Widget _buildOverlay() {
     return Container(
-      decoration: ShapeDecoration(
+      decoration: const ShapeDecoration(
         shape: QrScannerOverlayShape(
-          borderColor: Theme.of(context).colorScheme.primary,
-          borderRadius: 20,
-          borderLength: 30,
+          borderColor: Color(0xFF00A389),
+          borderRadius: 30,
+          borderLength: 40,
           borderWidth: 10,
-          cutOutSize: 250,
+          cutOutSize: 220,
         ),
-      ),
-      child: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(height: 260),
-            Text(
-              "Center the QR code within the frame",
-              style: TextStyle(color: Colors.white, backgroundColor: Colors.black45),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildManualEntry() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            "Manual Validation",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: _manualIdController,
-            decoration: const InputDecoration(
-              labelText: "Participant ID",
-              prefixIcon: Icon(Icons.badge),
-            ),
-          ),
-          const SizedBox(height: 15),
-          TextField(
-            controller: _manualNameController,
-            decoration: const InputDecoration(
-              labelText: "Participant Name",
-              prefixIcon: Icon(Icons.person),
-            ),
-          ),
-          const SizedBox(height: 30),
-          ElevatedButton(
-            onPressed: () {
-              if (_manualIdController.text.isNotEmpty && _manualNameController.text.isNotEmpty) {
-                _handleCheckIn(_manualIdController.text, _manualNameController.text);
-              }
-            },
-            child: const Text("Validate Entry"),
-          ),
-        ],
       ),
     );
   }
 }
 
-// Simple overlay shape for QR scanner (copied pattern)
 class QrScannerOverlayShape extends ShapeBorder {
   final Color borderColor;
   final double borderWidth;
@@ -183,7 +213,7 @@ class QrScannerOverlayShape extends ShapeBorder {
     final top = (height - boxHeight) / 2;
 
     final backgroundPaint = Paint()
-      ..color = Colors.black54
+      ..color = Colors.black87.withOpacity(0.7)
       ..style = PaintingStyle.fill;
 
     canvas.drawPath(
@@ -200,70 +230,44 @@ class QrScannerOverlayShape extends ShapeBorder {
     final borderPaint = Paint()
       ..color = borderColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = borderWidth;
+      ..strokeWidth = borderWidth
+      ..strokeCap = StrokeCap.round;
 
     // Draw corners
-    // Top Left
     canvas.drawPath(
       Path()
         ..moveTo(left, top + borderLength)
         ..lineTo(left, top + borderRadius)
-        ..arcToPoint(
-          Offset(left + borderRadius, top),
-          radius: Radius.circular(borderRadius),
-        )
+        ..arcToPoint(Offset(left + borderRadius, top), radius: Radius.circular(borderRadius))
         ..lineTo(left + borderLength, top),
       borderPaint,
     );
-    // Top Right
     canvas.drawPath(
       Path()
         ..moveTo(left + boxWidth - borderLength, top)
         ..lineTo(left + boxWidth - borderRadius, top)
-        ..arcToPoint(
-          Offset(left + boxWidth, top + borderRadius),
-          radius: Radius.circular(borderRadius),
-          clockwise: true,
-        )
+        ..arcToPoint(Offset(left + boxWidth, top + borderRadius), radius: Radius.circular(borderRadius), clockwise: true)
         ..lineTo(left + boxWidth, top + borderLength),
       borderPaint,
     );
-    // Bottom Left
     canvas.drawPath(
       Path()
         ..moveTo(left, top + boxHeight - borderLength)
         ..lineTo(left, top + boxHeight - borderRadius)
-        ..arcToPoint(
-          Offset(left + borderRadius, top + boxHeight),
-          radius: Radius.circular(borderRadius),
-          clockwise: false,
-        )
+        ..arcToPoint(Offset(left + borderRadius, top + boxHeight), radius: Radius.circular(borderRadius), clockwise: false)
         ..lineTo(left + borderLength, top + boxHeight),
       borderPaint,
     );
-    // Bottom Right
     canvas.drawPath(
       Path()
         ..moveTo(left + boxWidth - borderLength, top + boxHeight)
         ..lineTo(left + boxWidth - borderRadius, top + boxHeight)
-        ..arcToPoint(
-          Offset(left + boxWidth, top + boxHeight - borderRadius),
-          radius: Radius.circular(borderRadius),
-          clockwise: false,
-        )
+        ..arcToPoint(Offset(left + boxWidth, top + boxHeight - borderRadius), radius: Radius.circular(borderRadius), clockwise: false)
         ..lineTo(left + boxWidth, top + boxHeight - borderLength),
       borderPaint,
     );
   }
 
   @override
-  ShapeBorder scale(double t) {
-    return QrScannerOverlayShape(
-      borderColor: borderColor,
-      borderWidth: borderWidth,
-      borderLength: borderLength,
-      borderRadius: borderRadius,
-      cutOutSize: cutOutSize,
-    );
-  }
+  ShapeBorder scale(double t) => this;
 }

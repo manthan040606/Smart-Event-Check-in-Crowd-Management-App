@@ -20,7 +20,20 @@ class AttendanceNotifier extends StateNotifier<List<Participant>> {
     state = _participantBox.values.toList();
   }
 
-  Future<String?> checkIn(String id, String name) async {
+  List<Participant> getUnsyncedParticipants() {
+    return state.where((p) => p.isCheckedIn && !p.isSynced).toList();
+  }
+
+  Future<void> markAsSynced(String id) async {
+    final participant = _participantBox.get(id);
+    if (participant != null) {
+      final updated = participant.copyWith(isSynced: true);
+      await _participantBox.put(id, updated);
+      state = _participantBox.values.toList();
+    }
+  }
+
+  Future<String?> checkIn(String id, String name, {String? email}) async {
     final event = ref.read(eventProvider);
     if (event == null) return "No active event setup.";
 
@@ -35,11 +48,13 @@ class AttendanceNotifier extends StateNotifier<List<Participant>> {
     final participant = Participant(
       id: id,
       name: name,
+      email: email,
       isCheckedIn: true,
       checkInTime: DateTime.now(),
+      isSynced: false, // Initially false for offline-first simulation
     );
 
-    // Save to Hive
+    // Save to Hive (Offline-first)
     await _participantBox.put(id, participant);
     state = _participantBox.values.toList();
     

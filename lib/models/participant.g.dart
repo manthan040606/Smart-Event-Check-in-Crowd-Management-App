@@ -21,13 +21,15 @@ class ParticipantAdapter extends TypeAdapter<Participant> {
       name: fields[1] as String,
       checkInTime: fields[2] as DateTime?,
       isCheckedIn: fields[3] as bool,
+      isSynced: fields[4] as bool,
+      email: fields[5] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Participant obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -35,7 +37,11 @@ class ParticipantAdapter extends TypeAdapter<Participant> {
       ..writeByte(2)
       ..write(obj.checkInTime)
       ..writeByte(3)
-      ..write(obj.isCheckedIn);
+      ..write(obj.isCheckedIn)
+      ..writeByte(4)
+      ..write(obj.isSynced)
+      ..writeByte(5)
+      ..write(obj.email);
   }
 
   @override

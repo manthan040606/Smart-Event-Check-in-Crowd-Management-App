@@ -11,18 +11,23 @@ class EventNotifier extends StateNotifier<Event?> {
     _loadEvent();
   }
 
-  late Box<Event> _eventBox;
-
   Future<void> _loadEvent() async {
-    _eventBox = await Hive.openBox<Event>('eventBox');
-    if (_eventBox.isNotEmpty) {
-      state = _eventBox.getAt(0);
+    final box = await Hive.openBox<Event>('event_db');
+    if (box.isNotEmpty) {
+      state = box.getAt(0);
     }
   }
 
   Future<void> setEvent(Event event) async {
-    await _eventBox.clear();
-    await _eventBox.add(event);
+    final box = await Hive.openBox<Event>('event_db');
+    await box.clear();
+    await box.add(event);
     state = event;
+  }
+
+  Future<void> clearEvent() async {
+    final box = await Hive.openBox<Event>('event_db');
+    await box.clear();
+    state = null;
   }
 }

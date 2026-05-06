@@ -16,11 +16,19 @@ class Participant extends HiveObject {
   @HiveField(3)
   final bool isCheckedIn;
 
+  @HiveField(4)
+  final bool isSynced;
+
+  @HiveField(5)
+  final String? email;
+
   Participant({
     required this.id,
     required this.name,
     this.checkInTime,
     this.isCheckedIn = false,
+    this.isSynced = false,
+    this.email,
   });
 
   Participant copyWith({
@@ -28,12 +36,16 @@ class Participant extends HiveObject {
     String? name,
     DateTime? checkInTime,
     bool? isCheckedIn,
+    bool? isSynced,
+    String? email,
   }) {
     return Participant(
       id: id ?? this.id,
       name: name ?? this.name,
       checkInTime: checkInTime ?? this.checkInTime,
       isCheckedIn: isCheckedIn ?? this.isCheckedIn,
+      isSynced: isSynced ?? this.isSynced,
+      email: email ?? this.email,
     );
   }
 }
